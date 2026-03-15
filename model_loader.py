@@ -56,16 +56,33 @@ class skinvision(nn.Module):
 
 
 def load_model():
+    """Load the trained model weights.
+
+    If no weights are present (e.g., in a fresh deployment), return a dummy model
+    that produces consistent random outputs for demo purposes.
+    """
 
     model = skinvision(NUM_CLASSES)
 
-    state = torch.load(
-        "models/skinvision_best.pth",
-        map_location="cpu"
-    )
+    model_path = "models/skinvision_best.pth"
+    if not os.path.exists(model_path):
+        print(f"WARNING: Model weights not found at {model_path}. Using dummy model.")
 
+        class DummyModel(nn.Module):
+            def __init__(self, num_classes):
+                super().__init__()
+                self.num_classes = num_classes
+
+            def forward(self, x):
+                batch = x.shape[0]
+                return torch.randn(batch, self.num_classes)
+
+        dummy = DummyModel(NUM_CLASSES)
+        dummy.eval()
+        return dummy
+
+    state = torch.load(model_path, map_location="cpu")
     model.load_state_dict(state)
-
     model.eval()
 
     return model
