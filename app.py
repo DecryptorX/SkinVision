@@ -3,9 +3,20 @@ from flask_cors import CORS
 from PIL import Image
 import io
 import os
+import traceback
 
 app = Flask(__name__)
 CORS(app)
+
+# Return JSON errors for easier debugging in deployed environments
+@app.errorhandler(Exception)
+def handle_exception(e):
+    tb = traceback.format_exc()
+    print(tb)
+    return jsonify({
+        "error": str(e),
+        "traceback": tb.splitlines()[-10:]
+    }), 500
 
 classes = [
 'Acne and Rosacea',
