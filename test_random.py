@@ -1,0 +1,1 @@
+import torch; from PIL import Image; from predict import predict_image; import numpy as np; img = Image.fromarray(np.random.randint(0, 256, (384, 384, 3), dtype=np.uint8)); print(predict_image(img)); img2 = Image.fromarray(np.zeros((384, 384, 3), dtype=np.uint8)); print(predict_image(img2))

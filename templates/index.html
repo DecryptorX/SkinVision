@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<title>SkinVision AI</title>
+<link rel="stylesheet" href="/static/style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- Leaflet map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+</head>
+
+<body>
+
+<section class="hero">
+
+<div class="hero-content">
+
+<div class="hero-text">
+<h1>Check Your Skin Health with AI</h1>
+<p>
+Scan your moles and skin changes with our AI-powered analysis tool
+for early detection of potential risks.
+</p>
+
+<a href="#scan" class="btn-primary">Get Started</a>
+
+</div>
+
+<div class="hero-image">
+<img src="https://cdn-icons-png.flaticon.com/512/2966/2966481.png">
+</div>
+
+</div>
+
+</section>
+
+
+<section class="features">
+
+<div class="feature">
+<h3>Quick Skin Check</h3>
+<p>Upload a photo and get instant AI predictions.</p>
+</div>
+
+<div class="feature">
+<h3>AI-Powered Analysis</h3>
+<p>Deep learning model trained on dermatology datasets.</p>
+</div>
+
+<div class="feature">
+<h3>Secure & Confidential</h3>
+<p>Your images are not stored on the server.</p>
+</div>
+
+</section>
+
+
+<section id="scan" class="scanner">
+
+<h2>Scan Your Skin</h2>
+
+<form method="POST" enctype="multipart/form-data">
+
+<input type="file" name="image" id="fileInput" accept="image/*" required>
+
+<button type="button" id="startCamera" class="btn-primary">Use Webcam</button>
+
+<button type="submit" class="btn-primary">Analyze Skin</button>
+
+</form>
+
+<!-- webcam -->
+<video id="video" width="320" height="240" autoplay style="display:none;margin-top:10px;"></video>
+
+<button id="capture" class="btn-primary" style="display:none;margin-top:10px;">
+Capture Photo
+</button>
+
+<img id="preview" class="preview">
+
+{% if predictions %}
+
+<div class="results">
+
+<h2>Top Predictions</h2>
+
+{% if warning %}
+<div class="warning">{{warning}}</div>
+{% endif %}
+
+{% for disease, confidence in predictions %}
+
+<div class="prediction-item">
+
+<div class="prediction-label">
+
+<strong>{{disease}}</strong> — {{confidence}}%
+
+</div>
+
+<div class="progress-bar">
+<div class="progress" style="width: {{confidence}}%"></div>
+</div>
+
+</div>
+
+{% endfor %}
+
+</div>
+
+<div id="doctor-section" style="margin-top:40px;">
+<h2>Nearby Dermatologists</h2>
+<div id="map" style="height:400px;border-radius:10px;"></div>
+</div>
+
+{% endif %}
+
+</section>
+
+
+<section class="info">
+
+<h2>Safe & Secure Analysis</h2>
+
+<div class="info-grid">
+
+<div class="info-card">
+<h3>Early Detection</h3>
+<p>Identify potential skin issues early.</p>
+</div>
+
+<div class="info-card">
+<h3>Detailed Results</h3>
+<p>AI provides probability predictions.</p>
+</div>
+
+<div class="info-card">
+<h3>Easy to Use</h3>
+<p>Upload an image and get results in seconds.</p>
+</div>
+
+</div>
+
+</section>
+
+
+<script>
+
+const fileInput = document.getElementById("fileInput")
+const preview = document.getElementById("preview")
+const video = document.getElementById("video")
+const startCamera = document.getElementById("startCamera")
+const capture = document.getElementById("capture")
+
+let stream = null
+
+
+/* restore preview after reload */
+
+window.addEventListener("load",function(){
+
+const saved = localStorage.getItem("skinvision_preview")
+
+if(saved){
+preview.src = saved
+}
+
+})
+
+
+/* file preview */
+
+fileInput.onchange = function(){
+
+const file = this.files[0]
+
+if(file){
+
+const reader = new FileReader()
+
+reader.onload = function(e){
+
+preview.src = e.target.result
+localStorage.setItem("skinvision_preview",e.target.result)
+
+}
+
+reader.readAsDataURL(file)
+
+}
+
+}
+
+
+/* start webcam */
+
+startCamera.onclick = async function(){
+
+try{
+
+stream = await navigator.mediaDevices.getUserMedia({video:true})
+
+video.srcObject = stream
+
+video.style.display="block"
+capture.style.display="inline-block"
+
+}catch(err){
+
+alert("Camera access denied")
+
+}
+
+}
+
+
+/* capture photo */
+
+capture.onclick = function(){
+
+const canvas = document.createElement("canvas")
+
+canvas.width = video.videoWidth
+canvas.height = video.videoHeight
+
+const ctx = canvas.getContext("2d")
+
+ctx.drawImage(video,0,0)
+
+canvas.toBlob(function(blob){
+
+const file = new File([blob],"webcam.jpg",{type:"image/jpeg"})
+
+const dataTransfer = new DataTransfer()
+
+dataTransfer.items.add(file)
+
+fileInput.files = dataTransfer.files
+
+const url = URL.createObjectURL(blob)
+
+preview.src = url
+localStorage.setItem("skinvision_preview",url)
+
+})
+
+
+/* stop webcam */
+
+if(stream){
+stream.getTracks().forEach(track=>track.stop())
+}
+
+video.style.display="none"
+capture.style.display="none"
+
+}
+
+
+// MAP SCRIPT
+{% if predictions %}
+
+if(navigator.geolocation){
+
+navigator.geolocation.getCurrentPosition(function(pos){
+
+const lat = pos.coords.latitude
+const lon = pos.coords.longitude
+
+const map = L.map('map').setView([lat, lon], 13)
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+attribution:'© OpenStreetMap'
+}).addTo(map)
+
+L.marker([lat, lon]).addTo(map)
+.bindPopup("You are here")
+.openPopup()
+
+const query = `
+[out:json];
+node
+["healthcare"="doctor"]
+["speciality"="dermatology"]
+(around:5000,${lat},${lon});
+out;
+`
+
+fetch("https://overpass-api.de/api/interpreter",{
+method:"POST",
+body:query
+})
+.then(res=>res.json())
+.then(data=>{
+
+data.elements.forEach(place=>{
+
+L.marker([place.lat, place.lon])
+.addTo(map)
+.bindPopup(place.tags.name || "Dermatologist")
+
+})
+
+})
+
+})
+
+}
+
+
+/* SCROLL BACK TO SCAN AFTER ANALYZE */
+
+window.addEventListener("load", function(){
+
+const scanSection = document.getElementById("scan")
+
+if(scanSection){
+scanSection.scrollIntoView({
+behavior:"smooth",
+block:"start"
+})
+}
+
+})
+
+{% endif %}
+
+</script>
+
+</body>
+</html>
