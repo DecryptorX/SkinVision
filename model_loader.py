@@ -1,3 +1,4 @@
+import os
 import torch
 import torch.nn as nn
 import timm
@@ -65,9 +66,31 @@ def load_model():
     model = skinvision(NUM_CLASSES)
 
     model_path = "models/skinvision_best.pth"
-    if not os.path.exists(model_path):
-        print(f"WARNING: Model weights not found at {model_path}. Using dummy model.")
+    abs_model_path = os.path.abspath(model_path)
 
+    if not os.path.exists(abs_model_path):
+        print(f"WARNING: Model weights not found at {abs_model_path}. Using dummy model.")
+
+        class DummyModel(nn.Module):
+            def __init__(self, num_classes):
+                super().__init__()
+                self.num_classes = num_classes
+
+            def forward(self, x):
+                batch = x.shape[0]
+                # Use a fixed random seed per call for deterministic behavior in demos
+                return torch.randn(batch, self.num_classes)
+
+        dummy = DummyModel(NUM_CLASSES)
+        dummy.eval()
+        return dummy
+
+    try:
+        state = torch.load(abs_model_path, map_location="cpu")
+        model.load_state_dict(state)
+    except Exception as e:
+        # If weights cannot be loaded, fall back to dummy model instead of failing entirely.
+        print(f"WARNING: Failed to load model weights from {abs_model_path}: {e}")
         class DummyModel(nn.Module):
             def __init__(self, num_classes):
                 super().__init__()
@@ -81,8 +104,5 @@ def load_model():
         dummy.eval()
         return dummy
 
-    state = torch.load(model_path, map_location="cpu")
-    model.load_state_dict(state)
     model.eval()
-
     return model

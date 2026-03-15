@@ -134,6 +134,16 @@ def debug():
         return jsonify({"error": str(e), "traceback": traceback.format_exc().splitlines()[-10:]}), 500
 
 
+@app.route("/debug/model", methods=["GET"])
+def debug_model():
+    model_path = "models/skinvision_best.pth"
+    abs_path = os.path.abspath(model_path)
+    return jsonify({
+        "model_path": model_path,
+        "abs_path": abs_path,
+        "exists": os.path.exists(abs_path),
+    })
+
 
 if __name__ == "__main__":
     print("Starting Flask app...")
