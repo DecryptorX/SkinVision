@@ -42,7 +42,6 @@ next-frontend/out/
 # ===============================
 *.h5
 *.pt
-*.pth
 *.onnx
 *.pkl
 *.joblib
