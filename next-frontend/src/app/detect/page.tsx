@@ -57,7 +57,7 @@ export default function Detection() {
       const formData = new FormData();
       formData.append('image', file);
       
-      const response = await fetch('http://localhost:5000/api/predict', {
+      const response = await fetch('https://skinvision-production.up.railway.app/api/predict', {
         method: 'POST',
         body: formData,
       });
@@ -75,7 +75,7 @@ export default function Detection() {
       router.push('/prediction');
     } catch (error) {
       console.error(error);
-      alert('Failed to analyze image. Ensure the Python API is running on port 5000.');
+      alert('Failed to analyze image. Ensure the backend is reachable at skinvision-production.up.railway.app.');
     } finally {
       setIsLoading(false);
     }
