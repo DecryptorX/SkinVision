@@ -48,6 +48,8 @@ export default function Detection() {
 
   const [isLoading, setIsLoading] = useState(false);
 
+  const API_BASE = process.env.REACT_APP_API_URL ?? 'https://skinvision-production.up.railway.app';
+
   const handleAnalyze = async () => {
     if (!file) return;
     
@@ -57,7 +59,7 @@ export default function Detection() {
       const formData = new FormData();
       formData.append('image', file);
       
-      const response = await fetch('https://skinvision-production.up.railway.app/api/predict', {
+      const response = await fetch(`${API_BASE}/api/predict`, {
         method: 'POST',
         body: formData,
       });
@@ -76,7 +78,7 @@ export default function Detection() {
       });
     } catch (error) {
       console.error(error);
-      alert('Failed to analyze image. Ensure the backend is reachable at skinvision-production.up.railway.app.');
+      alert(`Failed to analyze image. Ensure the backend is reachable at ${API_BASE}.`);
     } finally {
       setIsLoading(false);
     }
