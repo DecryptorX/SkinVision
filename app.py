@@ -79,19 +79,6 @@ def api_predict():
     if "image" not in request.files:
         return jsonify({"error": "No image provided"}), 400
 
-
-@app.route("/debug", methods=["GET"])
-def debug():
-    try:
-        import timm
-        import torch
-        return jsonify({
-            "timm": timm.__version__,
-            "torch": torch.__version__,
-        })
-    except Exception as e:
-        return jsonify({"error": str(e), "traceback": traceback.format_exc().splitlines()[-10:]}), 500
-
     file = request.files["image"]
 
     if file.filename == "":
@@ -132,6 +119,19 @@ def debug():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/debug", methods=["GET"])
+def debug():
+    try:
+        import timm
+        import torch
+        return jsonify({
+            "timm": timm.__version__,
+            "torch": torch.__version__,
+        })
+    except Exception as e:
+        return jsonify({"error": str(e), "traceback": traceback.format_exc().splitlines()[-10:]}), 500
 
 
 
