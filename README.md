@@ -191,7 +191,10 @@ Always consult a qualified healthcare professional for medical advice.
 
 # 👨‍💻 Author
 
-**Devesh Yadav**
+**Ishan Yadav**
+B.Tech Student – Bennett University
+
+**Abhay Raj Verma**
 B.Tech Student – Bennett University
 
 GitHub: https://github.com/DecryptorX
